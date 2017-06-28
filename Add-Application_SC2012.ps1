@@ -91,7 +91,7 @@ Function NameFormat{
 
 ###Main
 #$filepath = Read-Host("Enter Filepath")
-$FileDir = $FilePath.Substring(0, $FilePath.LastIndexOf('\'))
+#$FileDir = $FilePath.Substring(0, $FilePath.LastIndexOf('\'))
 
 $SiteCode = 'SH1'
 
@@ -111,16 +111,16 @@ If($ConfigPath.ToUpper().StartsWith("MICROSOFT.POWERSHELL.CORE\FILESYSTEM::\\"))
 $Config = Select-Xml -LiteralPath $ConfigPath -XPath "//Application" | Select-Object -ExpandProperty Node
 
 #Set General variables and cd to the site server's PSDrive
-$General = Select-Xml -Xml $Config -XPath "//Application/General" | Select -ExpandProperty Node
+$General = Select-Xml -Xml $Config -XPath "//Application/General" | Select-Object -ExpandProperty Node
 $Vendor = $General.Vendor
 $Name = $General.Title
 $Version = $General.Version
 $Type = $General.Type
-$Category = $General.Category
+#$Category = $General.Category
 
 $ApplicationName = "$Vendor $Name $Version"
 
-Push-Location "SH1:\"
+Push-Location "($SiteCode):\"
 
 #Create Application
 If(!($CMApplication = Get-CMApplication -Name "$ApplicationName" -ErrorAction SilentlyContinue)){
@@ -129,7 +129,7 @@ If(!($CMApplication = Get-CMApplication -Name "$ApplicationName" -ErrorAction Si
         -Name $ApplicationName `
         -SoftwareVersion $Version `
         -Publisher $Vendor `
-        -AutoInstall:$True `     
+        -AutoInstall:$True
 
     Set-CMApplication `
         -InputObject $CMApplication `
@@ -232,7 +232,7 @@ If($Files){
             New-CMSoftwareMeteringRule `
                 -ProductName "$(NameFormat $Vendor $Name $Version)_$($FileName)_(*)" `
                 -FileName $FileName `
-                -SiteCode 'SH1' `
+                -SiteCode $SiteCode `
                 -LanguageId 65535 #This is the value for "Any" language
         }
     }
