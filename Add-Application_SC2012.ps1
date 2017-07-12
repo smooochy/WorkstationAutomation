@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Switch]$ApplicationOnly, 
     $FilePath = $(Read-Host "Enter Path to Config File:"),
     [Switch]$TSDeploy #Don't remember why I created this one but it's not used anywhere
@@ -10,6 +10,8 @@ Function Create-InstallCollection{
     $CollectionName = "Deploy_$(NameFormat $Vendor $Name $Version)_$($Type)_$($Suffix)"
 
     If(!($Collection = Get-CMCollection -Name $CollectionName -ErrorAction SilentlyContinue)){
+        If($DeployPurpose -eq 'Required'){$CMSchedule = $(New-CMSchedule -RecurCount 1 -RecurInterval Hours -Start $([DateTime]::MinValue).AddYears(2013).AddHours(1))}
+        Else{$CMSchedule = $(New-CMSchedule -RecurCount 1 -RecurInterval Days -Start $([DateTime]::MinValue).AddYears(2013).AddHours(1))}
         Write-Host "Creating Install Collection: $CollectionName"
         $Collection = New-CMCollection -Name $CollectionName -LimitingCollectionId 'SH100660' -CollectionType Device -RefreshType Periodic -RefreshSchedule $CMSchedule
         If($CollectionName -like "Deploy_Oracle_JRE*"){
@@ -20,6 +22,7 @@ Function Create-InstallCollection{
     Else{Write-Host "Collection $CollectionName already exists"}
 
     Write-Host "Starting deployment of $ApplicationName to $CollectionName"
+    If(!(Get-CMDeployment -CollectionName $CollectionName -FeatureType Application -SoftwareName $ApplicationName)){
     Start-CMApplicationDeployment `
         -CollectionName $CollectionName `
         -DeployAction $DeployAction `
@@ -30,33 +33,7 @@ Function Create-InstallCollection{
         -UserNotification DisplaySoftwareCenterOnly `
         -EnableMomAlert $False
     Return $Collection
-
-}
-
-Function Create-TSInstallCollection{
-    param($Suffix, $DeployPurpose, $DeployAction)
-
-    $CollectionName = "Deploy_TS_$(NameFormat $Vendor $Name $Version)_$($Type)_$($Suffix)"
-
-    If(!($Collection = Get-CMCollection -Name $CollectionName -ErrorAction SilentlyContinue)){
-        Write-Host "Creating Install Collection: $CollectionName"
-        $(New-CMSchedule -RecurCount 1 -RecurInterval Days -Start $([DateTime]::MinValue).AddYears(2013).AddHours(1))
-        $Collection = New-CMCollection -Name $CollectionName -LimitingCollectionId 'SH100667' -CollectionType Device -RefreshType Periodic -RefreshSchedule $CMSchedule
     }
-    Else{Write-Host "Collection $CollectionName already exists"}
-
-    Write-Host "Starting deployment of $ApplicationName to $CollectionName"
-    Start-CMApplicationDeployment `
-        -CollectionName $CollectionName `
-        -DeployAction $DeployAction `
-        -DeployPurpose $DeployPurpose `
-        -Name "$ApplicationName" `
-        -AvailableDateTime (Get-Date) `
-        -TimeBaseOn LocalTime `
-        -UserNotification HideAll `
-        -EnableMomAlert $False
-    Return $Collection
-
 }
 
 Function Create-ScopeCollection{
@@ -117,7 +94,7 @@ $Type = $General.Type
 #$Category = $General.Category
 
 $ApplicationName = "$Vendor $Name $Version"
-
+$DisplayName = $ApplicationName.Split('.') | Select -First 3
 Push-Location "($SiteCode):\"
 
 #Create Application
@@ -131,6 +108,7 @@ If(!($CMApplication = Get-CMApplication -Name "$ApplicationName" -ErrorAction Si
 
     Set-CMApplication `
         -InputObject $CMApplication `
+        -LocalizedApplicationName $DisplayName `
         -AppCategories "Workstation $Type" `
         -Publisher $General.Vendor `
         -SoftwareVersion $General.Version `
@@ -204,9 +182,6 @@ If(($Type -eq 'Managed') -or ($Type -eq 'Restricted')){
 ElseIf($Type -eq 'Optional'){
     $Collection = Create-InstallCollection -Suffix 'Available' -DeployPurpose 'Available' -DeployAction 'Install'
     If($Collection){Move-CMObject -InputObject $Collection -FolderPath ".\DeviceCollection\Workstations\Deployments"}
-}
-If($TSDeploy){
-    Create-TSInstallCollection -Suffix 'Required' -DeployPurpose 'Required' -DeployAction 'Install'
 }
 
 
