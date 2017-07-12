@@ -1,4 +1,4 @@
-﻿param(
+param(
     [Switch]$ApplicationOnly, 
     $FilePath = $(Read-Host "Enter Path to Config File:"),
     [Switch]$TSDeploy #Don't remember why I created this one but it's not used anywhere
@@ -8,8 +8,6 @@ Function Create-InstallCollection{
     param($Suffix, $DeployPurpose, $DeployAction)
 
     $CollectionName = "Deploy_$(NameFormat $Vendor $Name $Version)_$($Type)_$($Suffix)"
-    If($DeployPurpose -eq 'Required'){$CMSchedule = $(New-CMSchedule -RecurCount 1 -RecurInterval Hours -Start $([DateTime]::MinValue).AddYears(2013).AddHours(1))}
-    Else{$CMSchedule = $(New-CMSchedule -RecurCount 1 -RecurInterval Days -Start $([DateTime]::MinValue).AddYears(2013).AddHours(1))}
 
     If(!($Collection = Get-CMCollection -Name $CollectionName -ErrorAction SilentlyContinue)){
         Write-Host "Creating Install Collection: $CollectionName"
