@@ -94,8 +94,8 @@ $Type = $General.Type
 #$Category = $General.Category
 
 $ApplicationName = "$Vendor $Name $Version"
-$DisplayName = $ApplicationName.Split('.') | Select -First 3
-Push-Location "($SiteCode):\"
+#$DisplayName = ($ApplicationName.Split('.') | Select -First 3)
+Push-Location "$($SiteCode):\"
 
 #Create Application
 If(!($CMApplication = Get-CMApplication -Name "$ApplicationName" -ErrorAction SilentlyContinue)){
@@ -108,7 +108,7 @@ If(!($CMApplication = Get-CMApplication -Name "$ApplicationName" -ErrorAction Si
 
     Set-CMApplication `
         -InputObject $CMApplication `
-        -LocalizedApplicationName $DisplayName `
+        #-LocalizedApplicationName $DisplayName `
         -AppCategories "Workstation $Type" `
         -Publisher $General.Vendor `
         -SoftwareVersion $General.Version `
