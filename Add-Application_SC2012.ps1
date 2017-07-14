@@ -94,8 +94,13 @@ $Type = $General.Type
 #$Category = $General.Category
 
 $ApplicationName = "$Vendor $Name $Version"
+<<<<<<< HEAD
 #$DisplayName = ($ApplicationName.Split('.') | Select -First 3)
 Push-Location "$($SiteCode):\"
+=======
+$DisplayName = $ApplicationName.Split('.') | Select -First 3
+Push-Location "$SiteCode:\"
+>>>>>>> 0ce2054cca1fce2e74928389ba88b369946a3478
 
 #Create Application
 If(!($CMApplication = Get-CMApplication -Name "$ApplicationName" -ErrorAction SilentlyContinue)){
